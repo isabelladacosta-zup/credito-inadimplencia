@@ -1,3 +1,17 @@
+👨‍👩‍👧‍👦 Alunos integrantes do grupo:
+
+Isabella Tessarin da Costa - 1756061
+
+Guilherme Pereira de Souza - 1691678
+
+Guilherme Rodrigues Felix - 1324846
+
+Giovanni Pinheiro Bonifatto - 1635819
+
+Bernardo Affonso Rodrigues - 2025115818
+
+
+
 # Previsão de inadimplência de crédito
 
 Modelo de machine learning e sistema web que estimam a **probabilidade de um pedido de empréstimo não ser pago**. A ferramenta apoia a equipe de crédito de uma fintech: ela recomenda aprovar ou enviar para recusa/análise manual, e a decisão final continua sendo humana.
