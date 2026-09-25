@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de previsão</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #fff; --texto: #1d2230; --suave: #636b7f; --borda: #dfe2ea;
+    --roxo: #4b0f96; --roxo-claro: #efe8fb; --alto: #c0392b; --alto-bg: #fdecea;
+    --baixo: #1e8449; --baixo-bg: #e8f6ee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--texto); }
+  header { background: var(--roxo); color: #fff; padding: 18px 32px; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 4px 0 0; opacity: .8; font-size: 13px; }
+  nav { display: flex; gap: 4px; padding: 0 32px; background: var(--card); border-bottom: 1px solid var(--borda); }
+  nav button { border: 0; background: none; padding: 14px 18px; font: inherit; font-size: 14px; color: var(--suave);
+               cursor: pointer; border-bottom: 3px solid transparent; }
+  nav button.ativa { color: var(--roxo); border-bottom-color: var(--roxo); font-weight: 600; }
+  main { max-width: 1120px; margin: 24px auto; padding: 0 24px; }
+  .aba { display: none; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+  .aba.ativa { display: grid; }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 22px; }
+  .card h2 { margin: 0 0 4px; font-size: 17px; }
+  .card .desc { margin: 0 0 18px; color: var(--suave); font-size: 13px; }
+  form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; }
+  label small { font-weight: 400; color: var(--suave); }
+  input, select { font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; background: #fff; }
+  input:focus, select:focus { outline: 2px solid var(--roxo-claro); border-color: var(--roxo); }
+  .acoes { grid-column: 1 / -1; display: flex; gap: 10px; margin-top: 4px; }
+  .btn { border: 0; border-radius: 6px; padding: 10px 18px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn.primario { background: var(--roxo); color: #fff; }
+  .btn.sec { background: var(--roxo-claro); color: var(--roxo); }
+  .vazio { color: var(--suave); font-size: 14px; text-align: center; padding: 40px 10px; }
+  .veredito { border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .veredito.alto { background: var(--alto-bg); color: var(--alto); }
+  .veredito.baixo { background: var(--baixo-bg); color: var(--baixo); }
+  .veredito .rot { font-size: 22px; font-weight: 700; }
+  .veredito .acao { font-size: 13px; margin-top: 2px; color: var(--texto); }
+  .prob { font-size: 38px; font-weight: 700; margin: 4px 0 10px; }
+  .prob span { font-size: 14px; font-weight: 400; color: var(--suave); }
+  .barra { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #d5efe0, #fbe1dc); }
+  .barra .preench { position: absolute; inset: 0 auto 0 0; border-radius: 6px; }
+  .barra .corte { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--texto); }
+  .legenda { display: flex; justify-content: space-between; font-size: 12px; color: var(--suave); margin-top: 6px; }
+  dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 13px; margin: 18px 0 0; }
+  dt { color: var(--suave); } dd { margin: 0; font-weight: 600; text-align: right; }
+  .erro { background: var(--alto-bg); color: var(--alto); border-radius: 6px; padding: 10px 12px; font-size: 13px; }
+  .rodape { margin-top: 16px; font-size: 12px; color: var(--suave); line-height: 1.5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sistema de previsão</h1>
+  <p>Modelos de apoio à decisão. A decisão final e a revisão são sempre da equipe responsável.</p>
+</header>
+
+<nav>
+  {% for nome, p in problemas.items() %}
+  <button type="button" data-aba="{{ nome }}" class="{{ 'ativa' if loop.first }}">{{ p.titulo }}</button>
+  {% endfor %}
+</nav>
+
+<main>
+  {% for nome, p in problemas.items() %}
+  <section class="aba {{ 'ativa' if loop.first }}" id="aba-{{ nome }}" data-problema="{{ nome }}">
+    <div class="card">
+      <h2>{{ p.titulo }}</h2>
+      <p class="desc">{{ p.descricao }}</p>
+      <form>
+        {% for f in p.features %}
+        <label>
+          <span>{{ f.rotulo }}{% if f.unidade %} <small>({{ f.unidade }})</small>{% endif %}
+                {% if f.opcional %}<small>· opcional</small>{% endif %}</span>
+          {% if f.tipo == 'numero' %}
+          <input type="number" name="{{ f.nome }}" min="{{ f.min }}" max="{{ f.max }}" step="{{ f.passo }}"
+                 value="{{ f.padrao }}" {{ '' if f.opcional else 'required' }}>
+          {% else %}
+          <select name="{{ f.nome }}">
+            {% for o in f.opcoes %}<option value="{{ o }}" {{ 'selected' if o == f.padrao }}>{{ o }}</option>{% endfor %}
+          </select>
+          {% endif %}
+        </label>
+        {% endfor %}
+        <div class="acoes">
+          <button class="btn primario" type="submit">Calcular risco</button>
+          <button class="btn sec" type="reset">Limpar</button>
+        </div>
+      </form>
+    </div>
+    <div class="card resultado"><div class="vazio">Preencha o formulário e clique em <b>Calcular risco</b>.</div></div>
+  </section>
+  {% endfor %}
+</main>
+
+<script>
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const pct = v => (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+
+function ativar(nome) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('ativa', b.dataset.aba === nome));
+  document.querySelectorAll('.aba').forEach(s => s.classList.toggle('ativa', s.dataset.problema === nome));
+}
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => ativar(b.dataset.aba)));
+
+function mostrar(caixa, r) {
+  const alto = r.classe === 1, cor = alto ? 'var(--alto)' : 'var(--baixo)';
+  caixa.innerHTML = `
+    <div class="veredito ${alto ? 'alto' : 'baixo'}">
+      <div class="rot">${r.rotulo}</div><div class="acao">Sugestão: ${r.acao}</div>
+    </div>
+    <div class="prob">${pct(r.probabilidade)} <span>probabilidade de inadimplência</span></div>
+    <div class="barra">
+      <div class="preench" style="width:${r.probabilidade * 100}%;background:${cor}"></div>
+      <div class="corte" style="left:${r.limiar * 100}%" title="limiar"></div>
+    </div>
+    <div class="legenda"><span>0%</span><span>limiar de decisão: ${pct(r.limiar)}</span><span>100%</span></div>
+    <dl>
+      <dt>Perda esperada se aprovar</dt><dd>${brl(r.perda_esperada_aprovar)}</dd>
+      <dt>Perda esperada se recusar (lucro perdido)</dt><dd>${brl(r.perda_esperada_recusar)}</dd>
+    </dl>
+    <p class="rodape">O limiar de ${pct(r.limiar)} minimiza o custo total na validação cruzada
+      (inadimplente aprovado = R$ 8.000; bom cliente recusado = R$ 1.500).
+      Casos de risco alto devem passar por revisão humana (LGPD, art. 20).</p>`;
+}
+
+async function enviar(secao) {
+  const form = secao.querySelector('form'), caixa = secao.querySelector('.resultado');
+  const dados = Object.fromEntries(new FormData(form));
+  const resp = await fetch(`/api/${secao.dataset.problema}/prever`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados) });
+  const r = await resp.json();
+  if (!resp.ok) { caixa.innerHTML = `<div class="erro">${(r.erros || ['Erro']).join('<br>')}</div>`; return; }
+  mostrar(caixa, r);
+}
+
+document.querySelectorAll('.aba').forEach(secao => {
+  const form = secao.querySelector('form');
+  form.addEventListener('submit', e => { e.preventDefault(); enviar(secao); });
+  form.addEventListener('reset', () => secao.querySelector('.resultado').innerHTML =
+    '<div class="vazio">Preencha o formulário e clique em <b>Calcular risco</b>.</div>');
+});
+
+// pré-preenchimento pela URL: /?aba=credito&score_credito=450&...&auto=1
+const q = new URLSearchParams(location.search);
+if (q.get('aba')) {
+  const secao = document.getElementById('aba-' + q.get('aba'));
+  if (secao) {
+    ativar(q.get('aba'));
+    q.forEach((v, k) => { const el = secao.querySelector(`[name="${k}"]`); if (el) el.value = v; });
+    if (q.get('auto')) enviar(secao);
+  }
+}
+</script>
+</body>
+</html>

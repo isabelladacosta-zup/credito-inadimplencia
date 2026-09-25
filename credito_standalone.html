@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risco de crédito (standalone)</title>
+<style>
+  :root {
+    --bg: #f5f6fa; --card: #fff; --texto: #1d2230; --suave: #636b7f; --borda: #dfe2ea;
+    --roxo: #4b0f96; --roxo-claro: #efe8fb; --alto: #c0392b; --alto-bg: #fdecea;
+    --baixo: #1e8449; --baixo-bg: #e8f6ee;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--texto); }
+  header { background: var(--roxo); color: #fff; padding: 18px 32px; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 4px 0 0; opacity: .8; font-size: 13px; }
+  main { max-width: 1120px; margin: 24px auto; padding: 0 24px; }
+  .aba { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+  .card { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 22px; }
+  .card h2 { margin: 0 0 4px; font-size: 17px; }
+  .card .desc { margin: 0 0 18px; color: var(--suave); font-size: 13px; }
+  form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; }
+  label small { font-weight: 400; color: var(--suave); }
+  input, select { font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--borda); border-radius: 6px; background: #fff; }
+  input:focus, select:focus { outline: 2px solid var(--roxo-claro); border-color: var(--roxo); }
+  .acoes { grid-column: 1 / -1; display: flex; gap: 10px; margin-top: 4px; }
+  .btn { border: 0; border-radius: 6px; padding: 10px 18px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn.primario { background: var(--roxo); color: #fff; }
+  .btn.sec { background: var(--roxo-claro); color: var(--roxo); }
+  .vazio { color: var(--suave); font-size: 14px; text-align: center; padding: 40px 10px; }
+  .veredito { border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .veredito.alto { background: var(--alto-bg); color: var(--alto); }
+  .veredito.baixo { background: var(--baixo-bg); color: var(--baixo); }
+  .veredito .rot { font-size: 22px; font-weight: 700; }
+  .veredito .acao { font-size: 13px; margin-top: 2px; color: var(--texto); }
+  .prob { font-size: 38px; font-weight: 700; margin: 4px 0 10px; }
+  .prob span { font-size: 14px; font-weight: 400; color: var(--suave); }
+  .barra { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #d5efe0, #fbe1dc); }
+  .barra .preench { position: absolute; inset: 0 auto 0 0; border-radius: 6px; }
+  .barra .corte { position: absolute; top: -5px; bottom: -5px; width: 2px; background: var(--texto); }
+  .legenda { display: flex; justify-content: space-between; font-size: 12px; color: var(--suave); margin-top: 6px; }
+  dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 13px; margin: 18px 0 0; }
+  dt { color: var(--suave); } dd { margin: 0; font-weight: 600; text-align: right; }
+  .erro { background: var(--alto-bg); color: var(--alto); border-radius: 6px; padding: 10px 12px; font-size: 13px; }
+  .rodape { margin-top: 16px; font-size: 12px; color: var(--suave); line-height: 1.5; }
+  .aviso { background: #fff8e1; color: #8a6d00; border-bottom: 1px solid #f0e0a0; padding: 8px 32px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="aviso">Versão standalone: o cálculo roda inteiramente no navegador (JavaScript), reproduzindo o pipeline treinado (imputação, padronização, one-hot e regressão logística). Não depende do servidor Flask.</div>
+<header>
+  <h1>Risco de crédito</h1>
+  <p>Probabilidade de inadimplência de um pedido de empréstimo. A decisão final e a revisão são sempre da equipe responsável.</p>
+</header>
+
+<main>
+  <section class="aba">
+    <div class="card">
+      <h2>Risco de crédito</h2>
+      <p class="desc">Probabilidade de inadimplência de um pedido de empréstimo.</p>
+      <form id="form">
+        <label><span>Idade <small>(anos)</small></span>
+          <input type="number" name="idade" min="18" max="80" step="1" value="35" required></label>
+        <label><span>Renda mensal <small>(R$)</small> <small>· opcional</small></span>
+          <input type="number" name="renda_mensal" min="0" max="100000" step="100" value="4000"></label>
+        <label><span>Tempo de emprego <small>(anos)</small> <small>· opcional</small></span>
+          <input type="number" name="tempo_emprego_anos" min="0" max="60" step="0.5" value="5"></label>
+        <label><span>Score de crédito</span>
+          <input type="number" name="score_credito" min="300" max="1000" step="1" value="650" required></label>
+        <label><span>Dívidas ativas</span>
+          <input type="number" name="dividas_ativas" min="0" max="20" step="1" value="1" required></label>
+        <label><span>Possui imóvel</span>
+          <select name="possui_imovel">
+            <option value="nao" selected>nao</option>
+            <option value="sim">sim</option>
+          </select></label>
+        <label><span>Finalidade</span>
+          <select name="finalidade">
+            <option value="pessoal" selected>pessoal</option>
+            <option value="veiculo">veiculo</option>
+            <option value="reforma">reforma</option>
+            <option value="educacao">educacao</option>
+            <option value="negocio">negocio</option>
+          </select></label>
+        <label><span>Valor do empréstimo <small>(R$)</small></span>
+          <input type="number" name="valor_emprestimo" min="1000" max="150000" step="500" value="15000" required></label>
+        <label><span>Prazo <small>(meses)</small></span>
+          <input type="number" name="prazo_meses" min="12" max="60" step="12" value="36" required></label>
+        <div class="acoes">
+          <button class="btn primario" type="submit">Calcular risco</button>
+          <button class="btn sec" type="reset">Limpar</button>
+        </div>
+      </form>
+    </div>
+    <div class="card resultado"><div class="vazio">Preencha o formulário e clique em <b>Calcular risco</b>.</div></div>
+  </section>
+</main>
+
+<script>
+// Parâmetros extraídos de modelos/credito.joblib (pipeline treinado por treinar.py)
+const MODELO = {
+  taxaJurosMes: 0.02,
+  numCols: ["idade", "renda_mensal", "tempo_emprego_anos", "score_credito", "dividas_ativas",
+            "valor_emprestimo", "prazo_meses", "comprometimento_renda"],
+  medianas: [40.0, 3582.345, 3.9, 643.0, 1.0, 12900.0, 36.0, 0.15059762315984956],
+  scalerMean: [40.04208333333333, 4228.813170833333, 5.391208333333333, 644.1770833333334,
+               1.0947916666666666, 17670.9375, 35.9675, 0.1967105309169013],
+  scalerScale: [11.640245372258647, 2567.6476811839552, 5.058390492366509, 128.3180711805358,
+                1.0501854788229343, 16730.088138473562, 16.014647787260262, 0.16557262586389582],
+  catCols: [
+    { nome: "possui_imovel", categorias: ["nao", "sim"] },
+    { nome: "finalidade", categorias: ["educacao", "negocio", "pessoal", "reforma", "veiculo"] },
+  ],
+  coef: [-0.1363053688948292, -0.15553349648214476, -0.27929828867505346, -0.9941935502884547,
+         0.33364620606923484, 0.17883888125880004, -0.018922324396231822, 0.26052196219367807,
+         0.20060778476445795, -0.2010751305983827, -0.0412298897551147, 0.40910404662109545,
+         0.04274126810175071, -0.10864973677864531, -0.30243303402300914],
+  intercept: -1.656260127388932,
+  limiar: 0.21,
+};
+
+const CUSTOS = { falso_negativo: 8000, falso_positivo: 1500 };
+const CLASSES = {
+  0: { rotulo: "Risco baixo", acao: "Aprovar" },
+  1: { rotulo: "Risco alto", acao: "Recusar ou enviar para análise manual" },
+};
+
+function comprometimentoRenda(dados) {
+  const i = MODELO.taxaJurosMes;
+  const parcela = dados.valor_emprestimo * i / (1 - Math.pow(1 + i, -dados.prazo_meses));
+  if (dados.renda_mensal == null || dados.renda_mensal === 0 || Number.isNaN(dados.renda_mensal)) return NaN;
+  return parcela / dados.renda_mensal;
+}
+
+function prever(dados) {
+  const brutos = {
+    idade: dados.idade, renda_mensal: dados.renda_mensal, tempo_emprego_anos: dados.tempo_emprego_anos,
+    score_credito: dados.score_credito, dividas_ativas: dados.dividas_ativas,
+    valor_emprestimo: dados.valor_emprestimo, prazo_meses: dados.prazo_meses,
+    comprometimento_renda: comprometimentoRenda(dados),
+  };
+  const x = [];
+  MODELO.numCols.forEach((col, idx) => {
+    let v = brutos[col];
+    if (v == null || Number.isNaN(v)) v = MODELO.medianas[idx]; // imputação pela mediana do treino
+    const z = (v - MODELO.scalerMean[idx]) / MODELO.scalerScale[idx];
+    x.push(z);
+  });
+  MODELO.catCols.forEach(({ nome, categorias }) => {
+    categorias.forEach(cat => x.push(dados[nome] === cat ? 1 : 0));
+  });
+  const z = x.reduce((soma, v, idx) => soma + v * MODELO.coef[idx], MODELO.intercept);
+  const prob = 1 / (1 + Math.exp(-z));
+  const classe = prob >= MODELO.limiar ? 1 : 0;
+  return {
+    probabilidade: prob,
+    limiar: MODELO.limiar,
+    classe,
+    ...CLASSES[classe],
+    perda_esperada_aprovar: prob * CUSTOS.falso_negativo,
+    perda_esperada_recusar: (1 - prob) * CUSTOS.falso_positivo,
+  };
+}
+
+function validar(form) {
+  const fd = new FormData(form);
+  const erros = [];
+  const num = (nome, min, max, opcional) => {
+    const bruto = fd.get(nome);
+    if (bruto === null || String(bruto).trim() === "") {
+      if (opcional) return NaN;
+      erros.push(`${nome} é obrigatório.`);
+      return null;
+    }
+    const v = parseFloat(String(bruto).replace(",", "."));
+    if (Number.isNaN(v)) { erros.push(`${nome} deve ser numérico.`); return null; }
+    if (v < min || v > max) erros.push(`${nome} deve estar entre ${min} e ${max}.`);
+    return v;
+  };
+  const dados = {
+    idade: num("idade", 18, 80, false),
+    renda_mensal: num("renda_mensal", 0, 100000, true),
+    tempo_emprego_anos: num("tempo_emprego_anos", 0, 60, true),
+    score_credito: num("score_credito", 300, 1000, false),
+    dividas_ativas: num("dividas_ativas", 0, 20, false),
+    valor_emprestimo: num("valor_emprestimo", 1000, 150000, false),
+    prazo_meses: num("prazo_meses", 12, 60, false),
+    possui_imovel: fd.get("possui_imovel"),
+    finalidade: fd.get("finalidade"),
+  };
+  return { dados, erros };
+}
+
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const pct = v => (v * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+
+function mostrar(caixa, r) {
+  const alto = r.classe === 1, cor = alto ? 'var(--alto)' : 'var(--baixo)';
+  caixa.innerHTML = `
+    <div class="veredito ${alto ? 'alto' : 'baixo'}">
+      <div class="rot">${r.rotulo}</div><div class="acao">Sugestão: ${r.acao}</div>
+    </div>
+    <div class="prob">${pct(r.probabilidade)} <span>probabilidade de inadimplência</span></div>
+    <div class="barra">
+      <div class="preench" style="width:${r.probabilidade * 100}%;background:${cor}"></div>
+      <div class="corte" style="left:${r.limiar * 100}%" title="limiar"></div>
+    </div>
+    <div class="legenda"><span>0%</span><span>limiar de decisão: ${pct(r.limiar)}</span><span>100%</span></div>
+    <dl>
+      <dt>Perda esperada se aprovar</dt><dd>${brl(r.perda_esperada_aprovar)}</dd>
+      <dt>Perda esperada se recusar (lucro perdido)</dt><dd>${brl(r.perda_esperada_recusar)}</dd>
+    </dl>
+    <p class="rodape">O limiar de ${pct(r.limiar)} minimiza o custo total na validação cruzada
+      (inadimplente aprovado = R$ 8.000; bom cliente recusado = R$ 1.500).
+      Casos de risco alto devem passar por revisão humana (LGPD, art. 20).
+      Cálculo feito localmente no navegador, reproduzindo o pipeline treinado.</p>`;
+}
+
+const form = document.getElementById('form');
+const caixa = document.querySelector('.resultado');
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const { dados, erros } = validar(form);
+  if (erros.length) { caixa.innerHTML = `<div class="erro">${erros.join('<br>')}</div>`; return; }
+  mostrar(caixa, prever(dados));
+});
+form.addEventListener('reset', () => caixa.innerHTML =
+  '<div class="vazio">Preencha o formulário e clique em <b>Calcular risco</b>.</div>');
+</script>
+</body>
+</html>

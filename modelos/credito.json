@@ -1,0 +1,50 @@
+{
+  "problema": "credito",
+  "algoritmo": "regressao_logistica",
+  "limiar": 0.21,
+  "treinado_em": "2026-09-25T10:27:29",
+  "n_treino": 4800,
+  "n_teste": 1200,
+  "cv_treino": {
+    "acuracia": 0.7125,
+    "precisao": 0.4053191489361702,
+    "recall": 0.744140625,
+    "f1": 0.5247933884297521,
+    "roc_auc": 0.794971530720339,
+    "matriz_confusao": {
+      "vn": 2658,
+      "fp": 1118,
+      "fn": 262,
+      "vp": 762
+    },
+    "custo_total": 3773000
+  },
+  "teste": {
+    "acuracia": 0.7283333333333334,
+    "precisao": 0.42424242424242425,
+    "recall": 0.765625,
+    "f1": 0.5459610027855153,
+    "roc_auc": 0.8074930481991526,
+    "matriz_confusao": {
+      "vn": 678,
+      "fp": 266,
+      "fn": 60,
+      "vp": 196
+    },
+    "custo_total": 879000
+  },
+  "teste_limiar_05": {
+    "acuracia": 0.8108333333333333,
+    "precisao": 0.6464646464646465,
+    "recall": 0.25,
+    "f1": 0.36056338028169016,
+    "roc_auc": 0.8074930481991526,
+    "matriz_confusao": {
+      "vn": 909,
+      "fp": 35,
+      "fn": 192,
+      "vp": 64
+    },
+    "custo_total": 1588500
+  }
+}
